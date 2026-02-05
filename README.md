@@ -1,4 +1,4 @@
-# OpenGemini ✨
+# OpenGemini 🌌
 
 A native Windows 11 implementation of the OpenGemini AI Assistant, featuring a Hybrid AI Engine (Local Phi-3 + Google Gemini) and Slack integration.
 
