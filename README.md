@@ -4,14 +4,14 @@
 
 **Super Agent 🦸‍♂️** is a powerful, native Windows application that brings the power of **Google Gemini** and **Local On-Device AI** to your desktop.
 
-It is designed as a **Thinking Agent** with long-term memory and system control capabilities.
+It is designed as a **Thinking Agent** with long-term memory, system control, and internet access.
 
 ## 🧠 Brain Features (Phase 2)
 
 ### 1. Long-Term Memory (RAG)
 The agent never forgets. It uses a **Retrieval-Augmented Generation** system to recall past conversations.
 - **Embeddings**: Uses `gemini-embedding-004` to vectorize every message.
-- **Vector Database**: specific memories are stored in a local SQLite database (`messages.db`).
+- **Vector Database**: Memories are stored in a local SQLite database (`messages.db`).
 - **Context Injection**: Relevant past information is automatically retrieved and provided to the agent before it answers.
 
 ### 2. Expanded Action Space (Phase 1)
@@ -20,7 +20,12 @@ The agent can "touch" the world:
 - **`run_powershell`**: Can execute system commands.
 - **`read_file`**: Securely read files.
 
-### 3. 🛡️ Human-in-the-Loop Safety
+### 3. Web Capabilities (Phase 3) 🌐
+The agent is connected to the live internet:
+- **`web_search`**: Searches the web for real-time information.
+- **`read_web_page`**: Reads and parses content from any URL into clean markdown.
+
+### 4. 🛡️ Human-in-the-Loop Safety
 The agent is **incapable** of executing high-risk tools autonomously.
 - **Approval Required**: Unsafe actions (like writing files) pause execution.
 - **Transparency**: You see exactly what tool is being requested.
