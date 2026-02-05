@@ -144,5 +144,13 @@ namespace OpenClaw.Windows.Services.Data
             }
             return list;
         }
+        public async Task ClearMessagesAsync()
+        {
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            await connection.OpenAsync();
+            var command = connection.CreateCommand();
+            command.CommandText = "DELETE FROM Messages";
+            await command.ExecuteNonQueryAsync();
+        }
     }
 }
