@@ -150,14 +150,8 @@ namespace OpenClaw.Windows
             _trayIcon?.Dispose();
             _trayIcon = null;
 
-            // Actually Close
-            // We need to unhook the event to prevent loop (or just use a flag)
-             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
-            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-            
-            appWindow.Closing -= AppWindow_Closing;
-            window.Close();
+            // Force Application Exit
+            Application.Current.Exit();
         }
 
         // Simple RelayCommand helper
