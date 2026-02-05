@@ -4,7 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenClaw.Windows.Services;
 using OpenClaw.Windows.Services.Data;
 using OpenClaw.Windows.Services.Tools;
+using OpenClaw.Windows.Services.Tools;
 using OpenClaw.Windows.Views;
+using H.NotifyIcon;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input; 
+using System;
 
 namespace OpenClaw.Windows
 {
@@ -53,7 +58,11 @@ namespace OpenClaw.Windows
                     services.AddSingleton<Services.MemoryService>();
                     services.AddSingleton<Services.OcrService>(); // Local OCR
                     services.AddSingleton<Services.AudioTranscriberService>(); // Local Whisper
-                    
+                    services.AddSingleton<Services.ToastService>(); // Notifications
+                    services.AddSingleton<Services.FileWatcherService>(); // File Sensor
+
+                    services.AddHostedService<Services.CoreAgentBackgroundService>(); // Background Heartbeat
+
                     services.AddSingleton<Services.IAiService, Services.HybridAiService>();
                 })
                 .Build();
@@ -85,6 +94,80 @@ namespace OpenClaw.Windows
             appWindow.Resize(new global::Windows.Graphics.SizeInt32(600, 700));
             
             window.Activate();
+
+            // Initialize System Tray
+            InitializeSystemTray();
+            
+            // Handle Closing (Minimize to Tray)
+            appWindow.Closing += AppWindow_Closing;
+        }
+
+        private H.NotifyIcon.TaskbarIcon? _trayIcon;
+
+        private void InitializeSystemTray()
+        {
+            _trayIcon = new H.NotifyIcon.TaskbarIcon
+            {
+                IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Square44x44Logo.targetsize-24_altform-unplated.png")),
+                ToolTipText = "Super Agent 🦸‍♂️",
+            };
+            _trayIcon.LeftClickCommand = new StandardUICommand(StandardUICommandKind.None) { Command = new RelayCommand(() => ShowWindow()) };
+
+            var flyout = new MenuFlyout();
+            var openItem = new MenuFlyoutItem { Text = "Open Super Agent" };
+            openItem.Click += (s, e) => ShowWindow();
+            
+            var exitItem = new MenuFlyoutItem { Text = "Exit" };
+            exitItem.Click += (s, e) => ExitApp();
+
+            flyout.Items.Add(openItem);
+            flyout.Items.Add(new MenuFlyoutSeparator());
+            flyout.Items.Add(exitItem);
+
+            _trayIcon.ContextFlyout = flyout;
+            _trayIcon.ForceCreate();
+        }
+
+        private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
+        {
+            // Cancel Close and Hide instead
+            args.Cancel = true;
+            sender.Hide();
+        }
+
+        private void ShowWindow()
+        {
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            appWindow.Show();
+            window.Activate();
+        }
+
+        private void ExitApp()
+        {
+            // Remove the Tray Icon
+            _trayIcon?.Dispose();
+            _trayIcon = null;
+
+            // Actually Close
+            // We need to unhook the event to prevent loop (or just use a flag)
+             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            
+            appWindow.Closing -= AppWindow_Closing;
+            window.Close();
+        }
+
+        // Simple RelayCommand helper
+        public class RelayCommand : System.Windows.Input.ICommand
+        {
+            private readonly Action _execute;
+            public RelayCommand(Action execute) => _execute = execute;
+            public bool CanExecute(object? parameter) => true;
+            public void Execute(object? parameter) => _execute();
+            public event EventHandler? CanExecuteChanged;
         }
 
         /// <summary>
