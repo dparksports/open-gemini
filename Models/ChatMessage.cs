@@ -4,15 +4,23 @@ namespace OpenClaw.Windows.Models;
 
 public partial class ChatMessage : ObservableObject
 {
-    [ObservableProperty]
     private string role;
+    public string Role
+    {
+        get => role;
+        set => SetProperty(ref role, value);
+    }
 
-    [ObservableProperty]
     private string content;
+    public string Content
+    {
+        get => content;
+        set => SetProperty(ref content, value);
+    }
 
     public ChatMessage(string role, string content)
     {
-        Role = role;
-        Content = content;
+        this.role = role ?? "";
+        this.content = content ?? "";
     }
 }

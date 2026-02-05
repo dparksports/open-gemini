@@ -55,8 +55,11 @@ public sealed partial class MainPage : Page
                                  ?? models.FirstOrDefault(m => m.Contains("flash")) 
                                  ?? models.FirstOrDefault();
                                  
-                    hybrid.CloudService.CurrentModel = preferred;
-                    ModelSelector.SelectedItem = preferred;
+                    if (preferred != null)
+                    {
+                        hybrid.CloudService.CurrentModel = preferred;
+                        ModelSelector.SelectedItem = preferred;
+                    }
                 }
             });
         }

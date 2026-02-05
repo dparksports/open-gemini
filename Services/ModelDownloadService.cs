@@ -27,7 +27,7 @@ public class ModelDownloadService
         _httpClient = new HttpClient();
     }
 
-    public async Task DownloadModelAsync(string destinationFolder, IProgress<string> statusProgress, IProgress<double> downloadProgress)
+    public async Task DownloadModelAsync(string destinationFolder, IProgress<string>? statusProgress, IProgress<double>? downloadProgress)
     {
         if (!Directory.Exists(destinationFolder))
         {
