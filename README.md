@@ -1,8 +1,8 @@
-# OpenGemini for Windows
+# Super Agent 🦸‍♂️
 
-![OpenGemini Screenshot](Assets/screenshot.png)
+![Super Agent Screenshot](Assets/screenshot.png)
 
-OpenGemini is a powerful, native Windows application that brings the power of **Google Gemini** and **Local On-Device AI** (via ONNX Runtime GenAI) to your desktop.
+Super Agent 🦸‍♂️ is a powerful, native Windows application that brings the power of **Google Gemini** and **Local On-Device AI** (via ONNX Runtime GenAI) to your desktop.
 
 It features a **Phase 1 "Super Agent"** architecture, giving the AI the ability to interact with your system while keeping you in full control.
 

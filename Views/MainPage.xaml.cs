@@ -51,7 +51,7 @@ public sealed partial class MainPage : Page
             }
             if (Messages.Count == 0)
             {
-                Messages.Add(new ChatMessage("Assistant", "Hello! I am OpenGemini. I use a Hybrid AI engine (Local + Gemini)."));
+                Messages.Add(new ChatMessage("Assistant", "Hello! I am Super Agent 🦸‍♂️. How can I help you today?"));
             }
         });
     }

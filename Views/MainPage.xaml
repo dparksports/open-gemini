@@ -42,7 +42,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox x:Name="InputBox" PlaceholderText="Ask OpenGemini..." KeyUp="InputBox_KeyUp"/>
+            <TextBox x:Name="InputBox" PlaceholderText="Ask Super Agent 🦸‍♂️..." KeyUp="InputBox_KeyUp"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
                 <ComboBox x:Name="ModelSelector" PlaceholderText="Model" SelectionChanged="ModelSelector_SelectionChanged" Width="140" Margin="0,0,4,0"/>
                 <Button x:Name="SendButton" Content="Send" Click="SendButton_Click" Style="{StaticResource AccentButtonStyle}" Margin="0,0,4,0"/>

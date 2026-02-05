@@ -45,6 +45,9 @@ namespace OpenClaw.Windows
                     services.AddSingleton<IAiTool, Services.Tools.WriteFileTool>();
                     services.AddSingleton<IAiTool, Services.Tools.PowerShellTool>();
                     
+                    services.AddSingleton<Services.EmbeddingService>();
+                    services.AddSingleton<Services.MemoryService>();
+                    
                     services.AddSingleton<Services.IAiService, Services.HybridAiService>();
                 })
                 .Build();

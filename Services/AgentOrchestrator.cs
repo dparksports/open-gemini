@@ -14,12 +14,14 @@ namespace OpenClaw.Windows.Services
         private readonly GoogleGeminiService _geminiService;
         private readonly ToolRegistry _toolRegistry;
         private readonly Data.ChatContextDb _db;
+        private readonly MemoryService _memoryService;
 
-        public AgentOrchestrator(GoogleGeminiService geminiService, ToolRegistry toolRegistry, Data.ChatContextDb db)
+        public AgentOrchestrator(GoogleGeminiService geminiService, ToolRegistry toolRegistry, Data.ChatContextDb db, MemoryService memoryService)
         {
             _geminiService = geminiService;
             _toolRegistry = toolRegistry;
             _db = db;
+            _memoryService = memoryService;
             
             _ = InitializeDbAsync();
         }
@@ -88,8 +90,33 @@ namespace OpenClaw.Windows.Services
             // 1. Build initial history from ChatMessage collection
             var geminiHistory = BuildGeminiHistory(messageHistory);
 
-            // 2. Add current user message
-            await _db.SaveMessageAsync("User", userMessage); // Save to DB
+            // 2. RAG: Search and Inject Memories
+            var memories = await _memoryService.SearchMemoriesAsync(userMessage);
+            if (memories.Any())
+            {
+                var contextBlock = "### Long-Term Memory (Context from past conversations):\n" + 
+                                   string.Join("\n", memories.Select(m => $"- {m.Content} ({m.Timestamp:g})"));
+                
+                // Inject as a System/User instruction at the very beginning or right before the latest message.
+                // Appending it to the list of parts of the *first* message is one way, 
+                // but adding a dedicated "system" or "user" context message is cleaner.
+                // Let's prepend it to the history if possible, or add it to the current user message context.
+                
+                // Option A: Add as a separate "user" message before the real user message.
+                 geminiHistory.Add(new GeminiContent
+                 {
+                     Role = "user",
+                     Parts = new List<GeminiPart> { new GeminiPart { Text = $"Context:\n{contextBlock}\n\n(Use this information to answer the user's next question if relevant.)" } }
+                 });
+                 
+                 // Option B: Gemini 1.5 System Instruction (not implemented in this simplified client yet).
+            }
+
+            // 3. Add current user message
+            await _db.SaveMessageAsync("User", userMessage); // Save to Chat Log
+            
+            // Auto-Save to Long-Term Memory (Fire and Forget)
+            _ = _memoryService.SaveMemoryAsync($"User: {userMessage}");
 
             geminiHistory.Add(new GeminiContent
             {
@@ -97,7 +124,7 @@ namespace OpenClaw.Windows.Services
                 Parts = new List<GeminiPart> { new GeminiPart { Text = userMessage } }
             });
 
-            // 3. Start Agent Loop
+            // 4. Start Agent Loop
             int maxTurns = 5; // Safety break
             int currentTurn = 0;
 

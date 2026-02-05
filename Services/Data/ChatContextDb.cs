@@ -33,6 +33,13 @@ namespace OpenClaw.Windows.Services.Data
                     ToolCallId TEXT,
                     Timestamp TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS Memories (
+                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Content TEXT NOT NULL,
+                    Vector TEXT, 
+                    Timestamp TEXT NOT NULL
+                );
             ";
             await command.ExecuteNonQueryAsync();
         }
@@ -84,6 +91,50 @@ namespace OpenClaw.Windows.Services.Data
             }
 
             return messages;
+        }
+
+        public async Task SaveMemoryAsync(string content, float[] vector)
+        {
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = 
+            @"
+                INSERT INTO Memories (Content, Vector, Timestamp)
+                VALUES ($content, $vector, $timestamp);
+            ";
+            command.Parameters.AddWithValue("$content", content);
+            command.Parameters.AddWithValue("$vector", System.Text.Json.JsonSerializer.Serialize(vector));
+            command.Parameters.AddWithValue("$timestamp", DateTime.UtcNow.ToString("O"));
+
+            await command.ExecuteNonQueryAsync();
+        }
+
+        public async Task<List<MemoryItem>> GetAllMemoriesAsync()
+        {
+            var list = new List<MemoryItem>();
+            using var connection = new SqliteConnection($"Data Source={_dbPath}");
+            await connection.OpenAsync();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "SELECT Id, Content, Vector, Timestamp FROM Memories";
+            
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var vectorJson = reader.IsDBNull(2) ? "[]" : reader.GetString(2);
+                var vector = System.Text.Json.JsonSerializer.Deserialize<float[]>(vectorJson) ?? Array.Empty<float>();
+
+                list.Add(new MemoryItem
+                {
+                    Id = reader.GetInt32(0),
+                    Content = reader.GetString(1),
+                    Vector = vector,
+                    Timestamp = DateTime.Parse(reader.GetString(3))
+                });
+            }
+            return list;
         }
     }
 }
