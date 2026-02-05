@@ -143,8 +143,12 @@ namespace OpenClaw.Windows
             _trayIcon.ForceCreate();
         }
 
+        private bool _isExitTriggered = false;
+
         private void AppWindow_Closing(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowClosingEventArgs args)
         {
+            if (_isExitTriggered) return; // Allow close if Exit was clicked
+
             // Cancel Close and Hide instead
             args.Cancel = true;
             sender.Hide();
@@ -161,6 +165,8 @@ namespace OpenClaw.Windows
 
         private void ExitApp()
         {
+            _isExitTriggered = true; // Signal that we really want to exit
+            
             // Remove the Tray Icon
             _trayIcon?.Dispose();
             _trayIcon = null;
