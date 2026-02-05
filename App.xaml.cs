@@ -82,7 +82,7 @@ namespace OpenClaw.Windows
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
             var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
             var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
-            appWindow.Resize(new global::Windows.Graphics.SizeInt32(500, 700));
+            appWindow.Resize(new global::Windows.Graphics.SizeInt32(600, 700));
             
             window.Activate();
         }
