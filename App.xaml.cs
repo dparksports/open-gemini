@@ -46,9 +46,13 @@ namespace OpenClaw.Windows
                     services.AddSingleton<IAiTool, Services.Tools.PowerShellTool>();
                     services.AddSingleton<IAiTool, Services.Tools.WebSearchTool>();
                     services.AddSingleton<IAiTool, Services.Tools.ReadWebPageTool>();
+                    services.AddSingleton<IAiTool, Services.Tools.ReadTextFromImageTool>();
+                    services.AddSingleton<IAiTool, Services.Tools.TranscribeAudioTool>();
                     
                     services.AddSingleton<Services.EmbeddingService>();
                     services.AddSingleton<Services.MemoryService>();
+                    services.AddSingleton<Services.OcrService>(); // Local OCR
+                    services.AddSingleton<Services.AudioTranscriberService>(); // Local Whisper
                     
                     services.AddSingleton<Services.IAiService, Services.HybridAiService>();
                 })

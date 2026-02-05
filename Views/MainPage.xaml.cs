@@ -169,14 +169,100 @@ public sealed partial class MainPage : Page
         }
     }
 
+    private string? _base64Image;
+
+    private void ClearImage_Click(object sender, RoutedEventArgs e)
+    {
+        _base64Image = null;
+        ImagePreview.Source = null;
+        ImagePreviewPanel.Visibility = Visibility.Collapsed;
+    }
+
+    private async void InputGrid_DragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = global::Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+    }
+
+    private async void InputGrid_Drop(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+        {
+            var items = await e.DataView.GetStorageItemsAsync();
+            if (items.Count > 0 && items[0] is global::Windows.Storage.StorageFile file)
+            {
+                var fileType = file.ContentType;
+                if (fileType.StartsWith("image/"))
+                {
+                    await ProcessStorageFile(file);
+                }
+            }
+        }
+    }
+
+    private async void InputBox_Paste(object sender, TextControlPasteEventArgs e)
+    {
+        var dataPackageView = global::Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+        if (dataPackageView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.Bitmap))
+        {
+            e.Handled = true; // Prevent pasting "Bitmap" text
+            var reference = await dataPackageView.GetBitmapAsync();
+            using var stream = await reference.OpenReadAsync();
+            await SetImagePreview(stream);
+        }
+        else if (dataPackageView.Contains(global::Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+        {
+            var items = await dataPackageView.GetStorageItemsAsync();
+            if (items.Count > 0 && items[0] is global::Windows.Storage.StorageFile file)
+            {
+                 if (file.ContentType.StartsWith("image/"))
+                 {
+                     e.Handled = true;
+                     await ProcessStorageFile(file);
+                 }
+            }
+        }
+    }
+
+    private async Task ProcessStorageFile(global::Windows.Storage.StorageFile file)
+    {
+        using var stream = await file.OpenAsync(global::Windows.Storage.FileAccessMode.Read);
+        await SetImagePreview(stream);
+    }
+
+    private async Task SetImagePreview(global::Windows.Storage.Streams.IRandomAccessStream stream)
+    {
+        // 1. Display in UI
+        var bitmap = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
+        await bitmap.SetSourceAsync(stream);
+        ImagePreview.Source = bitmap;
+        ImagePreviewPanel.Visibility = Visibility.Visible;
+
+        // 2. Convert to Base64 for API
+        // Reset stream position
+        stream.Seek(0);
+        var reader = new global::Windows.Storage.Streams.DataReader(stream.GetInputStreamAt(0));
+        await reader.LoadAsync((uint)stream.Size);
+        var bytes = new byte[stream.Size];
+        reader.ReadBytes(bytes);
+        _base64Image = Convert.ToBase64String(bytes);
+    }
+
     private async Task SendMessage()
     {
-        if (string.IsNullOrWhiteSpace(InputBox.Text)) return;
+        if (string.IsNullOrWhiteSpace(InputBox.Text) && _base64Image == null) return;
 
         string userText = InputBox.Text;
-        InputBox.Text = "";
+        string? imageToSend = _base64Image;
         
-        Messages.Add(new ChatMessage("User", userText));
+        InputBox.Text = "";
+        ClearImage_Click(this, new RoutedEventArgs()); // Clear UI image state immediately
+        
+        Messages.Add(new ChatMessage("User", userText) 
+        { 
+             // Ideally we show the image in the chat history too, but ChatMessage needs an Image property.
+             // For now, we append a marker.
+             Content = userText + (imageToSend != null ? " [🖼️ Image Attached]" : "")
+        });
 
         var assistantMsg = new ChatMessage("Assistant", "");
         Messages.Add(assistantMsg);
@@ -184,7 +270,8 @@ public sealed partial class MainPage : Page
         try 
         {
             // Use AgentOrchestrator Loop
-            await foreach (var chunk in _agent.ChatAsync(userText, Messages))
+            // Pass the image if present
+            await foreach (var chunk in _agent.ChatAsync(userText, Messages, imageToSend))
             {
                 assistantMsg.Content += chunk;
             }

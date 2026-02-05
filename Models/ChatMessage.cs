@@ -23,6 +23,7 @@ public partial class ChatMessage : ObservableObject
         this.role = role ?? "";
         this.content = content ?? "";
         this.Timestamp = System.DateTime.Now;
+        this.toolCallId = "";
     }
 
     private string toolCallId;

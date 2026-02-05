@@ -59,21 +59,49 @@ namespace OpenClaw.Windows.Services.Tools
                 var sb = new StringBuilder();
                 var textNodes = htmlDoc.DocumentNode.SelectNodes("//p|//h1|//h2|//h3|//h4|//li|//pre|//code");
                 
+                var titleNode = htmlDoc.DocumentNode.SelectSingleNode("//title");
+                if (titleNode != null) sb.AppendLine($"# {System.Net.WebUtility.HtmlDecode(titleNode.InnerText).Trim()}\n");
+
+                // Try to get meta description as a fallback or summary
+                var metaDesc = htmlDoc.DocumentNode.SelectSingleNode("//meta[@name='description']");
+                if (metaDesc != null) 
+                {
+                    string desc = metaDesc.GetAttributeValue("content", "");
+                    if (!string.IsNullOrWhiteSpace(desc))
+                    {
+                        sb.AppendLine($"> **Summary**: {System.Net.WebUtility.HtmlDecode(desc)}\n");
+                    }
+                }
+
                 if (textNodes != null)
                 {
                     foreach (var node in textNodes)
                     {
                         var text = System.Net.WebUtility.HtmlDecode(node.InnerText).Trim();
-                        if (!string.IsNullOrWhiteSpace(text))
+                        // Ignore very short or navigation-like links unless they are part of a sentence
+                        if (!string.IsNullOrWhiteSpace(text) && text.Length > 20) 
                         {
                             // Add simple formatting hints
-                            if (node.Name.StartsWith("h")) sb.AppendLine($"# {text}");
+                            if (node.Name.StartsWith("h")) sb.AppendLine($"## {text}");
                             else if (node.Name == "li") sb.AppendLine($"- {text}");
                             else sb.AppendLine(text);
                             
                             sb.AppendLine(); 
                         }
                     }
+                }
+                
+                // Fallback: If body is empty, try to get anything strictly relevant
+                if (sb.Length < 200)
+                {
+                    sb.AppendLine("\n[Note: Main content extraction was sparse. Displaying raw meta tags and text.]\n");
+                    // Try getting OpenGraph tags
+                    var ogDesc = htmlDoc.DocumentNode.SelectSingleNode("//meta[@property='og:description']");
+                    if (ogDesc != null) sb.AppendLine($"OG Description: {ogDesc.GetAttributeValue("content", "")}");
+                    
+                    // Specific logic for Finance Metadata?
+                    // Yahoo Finance specific class or ID?
+                    // Often price is in a specific attribute on these sites, hard to guess generic path.
                 }
 
                 var final = sb.ToString();

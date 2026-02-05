@@ -38,7 +38,7 @@ namespace OpenClaw.Windows.Services
 
         private OpenClaw.Windows.Models.FunctionCall? _pendingToolCall;
 
-        public async IAsyncEnumerable<string> ChatAsync(string userMessage, ObservableCollection<ChatMessage> messageHistory)
+        public async IAsyncEnumerable<string> ChatAsync(string userMessage, ObservableCollection<ChatMessage> messageHistory, string? base64Image = null)
         {
             // 0. Check for Pending Tool Approval
             if (_pendingToolCall != null)
@@ -60,22 +60,6 @@ namespace OpenClaw.Windows.Services
                 else
                 {
                      yield return $"[Agent] ✅ Tool approved. Executing...\n";
-                     
-                     // Execute the pending tool
-                     // But wait, the loop structure below starts fresh.
-                     // We need to jump straight to execution phase or inject the logic.
-                     // A cleaner way is to handle the *approval* as just another user message, 
-                     // but logically we want to resume the *agent's* intention.
-                     
-                     // REFACTOR STRATEGY: 
-                     // If we are approving, we just execute the tool and append the result. 
-                     // Then we let the normal loop pick up the history (which now has user:yes, tool:result).
-                     // But Gemini needs to see [Model: Call] -> [Tool: Result]. 
-                     // "User: Yes" confuses that sequence if we are not careful.
-                     
-                     // SIMPLIFIED:
-                     // If approved, we execute the tool immediately here, save the result, and THEN start the loop.
-                     // The loop will load history which includes the new Tool Result, so Gemini picks up from there.
                      
                      var tool = _toolRegistry.GetTool(pendingCall.Name);
                      if (tool != null)
@@ -102,20 +86,12 @@ namespace OpenClaw.Windows.Services
             {
                 var contextBlock = "### Long-Term Memory (Context from past conversations):\n" + 
                                    string.Join("\n", memories.Select(m => $"- {m.Content} ({m.Timestamp:g})"));
-                
-                // Inject as a System/User instruction at the very beginning or right before the latest message.
-                // Appending it to the list of parts of the *first* message is one way, 
-                // but adding a dedicated "system" or "user" context message is cleaner.
-                // Let's prepend it to the history if possible, or add it to the current user message context.
-                
-                // Option A: Add as a separate "user" message before the real user message.
+                 
                  geminiHistory.Add(new GeminiContent
                  {
                      Role = "user",
                      Parts = new List<GeminiPart> { new GeminiPart { Text = $"Context:\n{contextBlock}\n\n(Use this information to answer the user's next question if relevant.)" } }
                  });
-                 
-                 // Option B: Gemini 1.5 System Instruction (not implemented in this simplified client yet).
             }
 
             // 3. Add current user message
@@ -124,10 +100,24 @@ namespace OpenClaw.Windows.Services
             // Auto-Save to Long-Term Memory (Fire and Forget)
             _ = _memoryService.SaveMemoryAsync($"User: {userMessage}");
 
+            var userParts = new List<GeminiPart>();
+            if (!string.IsNullOrEmpty(base64Image))
+            {
+                userParts.Add(new GeminiPart 
+                { 
+                    InlineData = new GeminiInlineData 
+                    { 
+                        MimeType = "image/jpeg", 
+                        Data = base64Image 
+                    } 
+                });
+            }
+            userParts.Add(new GeminiPart { Text = userMessage });
+
             geminiHistory.Add(new GeminiContent
             {
                 Role = "user",
-                Parts = new List<GeminiPart> { new GeminiPart { Text = userMessage } }
+                Parts = userParts
             });
 
             // 4. Start Agent Loop

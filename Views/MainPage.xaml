@@ -37,13 +37,30 @@
              <ProgressBar x:Name="DownloadProgressBar" Maximum="100" />
         </StackPanel>
 
-        <Grid Grid.Row="1" Margin="20" x:Name="InputGrid">
+        <Grid Grid.Row="1" Margin="20" x:Name="InputGrid" AllowDrop="True" DragOver="InputGrid_DragOver" Drop="InputGrid_Drop">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox x:Name="InputBox" PlaceholderText="Ask Super Agent 🦸‍♂️..." KeyUp="InputBox_KeyUp"/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Image Preview -->
+            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,0,0,8" x:Name="ImagePreviewPanel" Visibility="Collapsed">
+                <Border CornerRadius="8" BorderBrush="{ThemeResource SystemControlHighlightAccentBrush}" BorderThickness="2">
+                    <Grid>
+                        <Image x:Name="ImagePreview" Height="100" Stretch="Uniform" />
+                        <Button VerticalAlignment="Top" HorizontalAlignment="Right" Content="❌" Background="Red" Foreground="White" FontSize="10" Padding="2" Margin="2" Click="ClearImage_Click" />
+                    </Grid>
+                </Border>
+                <TextBlock VerticalAlignment="Center" Margin="10,0,0,0" FontStyle="Italic" Text="Image attached" Foreground="Gray"/>
+            </StackPanel>
+
+            <TextBox Grid.Row="1" x:Name="InputBox" PlaceholderText="Ask Super Agent 🦸‍♂️ (Paste/Drop images supported)..." KeyUp="InputBox_KeyUp" Paste="InputBox_Paste"/>
+            
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
                 <ComboBox x:Name="ModelSelector" PlaceholderText="Model" SelectionChanged="ModelSelector_SelectionChanged" Width="140" Margin="0,0,4,0"/>
                 <Button x:Name="SendButton" Content="Send" Click="SendButton_Click" Style="{StaticResource AccentButtonStyle}" Margin="0,0,4,0"/>
                 <Button Content="Download Model" Click="RedownloadButton_Click" ToolTipService.ToolTip="Force Re-download Model"  />
