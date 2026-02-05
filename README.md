@@ -2,6 +2,8 @@
 
 ![Super Agent Dashboard](/super_agent_final_dashboard_1770282859819.png)
 
+> **[📥 Download Latest Release](../../releases/latest)**
+
 **Super Agent** is a next-generation AI assistant for Windows that combines the power of cloud-based reasoning (Gemini 2.0 Flash) with the privacy and speed of local computing (OnnxRuntime, Windows Media OCR, Whisper.net).
 
 It is designed to be your **proactive digital sidekick**, capable of remembering your context, browsing the web, and perceiving the world through vision and audio—independent of the cloud when needed.
