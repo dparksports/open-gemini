@@ -1,37 +1,39 @@
 # Super Agent 🦸‍♂️
 
-![Super Agent Dashboard](/super_agent_final_dashboard_1770282859819.png)
+![Super Agent Dashboard](Assets/dashboard_v2.png)
 
 > **[📥 Download Latest Release](../../releases/latest)**
 
-**Super Agent** is a next-generation AI assistant for Windows that combines the power of cloud-based reasoning (Gemini 2.0 Flash) with the privacy and speed of local computing (OnnxRuntime, Windows Media OCR, Whisper.net).
+**Super Agent** is a next-generation AI assistant for Windows that combines the power of cloud-based reasoning (Gemini 2.0 Flash) with the privacy and speed of local computing.
 
-It is designed to be your **proactive digital sidekick**, capable of remembering your context, browsing the web, and perceiving the world through vision and audio—independent of the cloud when needed.
+It is designed to be your **proactive digital sidekick**, living in your system tray, watching your files, and extending its capabilities through a dynamic skill system—compatible with the OpenClaw ecosystem.
 
 ## 🌟 Key Features
+
+### 🧩 Dynamic Skills Ecosystem (New!)
+- **OpenClaw Compatible**: Simply drop existing OpenClaw skills into `%APPDATA%\OpenClaw\Skills`.
+- **Polyglot Runtime**: Supports both **PowerShell** (`.ps1`) for deep Windows automation and **Python** (`.py`) for data processing.
+- **Hot-Reload**: Add new skills on the fly without restarting the agent.
 
 ### 🧠 Hybrid AI Architecture
 - **Cloud Power**: Uses **Google Gemini 2.0 Flash** for complex reasoning, coding, and creative tasks.
 - **Local Speed**: Uses **Microsoft Phi-3 / Llama 3** (via ONNX) for fast, offline chat and simple queries.
-- **Smart Routing**: automatically routes requests to the best model based on complexity and privacy settings.
+- **Smart Routing**: Automatically routes requests to the best model based on complexity and privacy settings.
+
+### 🤖 Autonomous & Proactive
+- **System Tray Agent**: Lives exclusively in the tray. Minimizes out of your way but is always one click away.
+- **Background Heartbeat**: Runs a background service loop to monitor tasks and health.
+- **File Sensors**: Watches your file system for changes to proactively offer help (e.g., "I see you added a new PDF, want me to summarize it?").
 
 ### 💾 Long-Term Memory (RAG)
 - **Never Forgets**: Stores conversations and memories in a local SQLite vector database.
 - **Semantic Search**: Automatically retrieves relevant past interactions to provide context-aware answers.
 - **Privacy-First**: Your memories live on your device, not on a remote server.
 
-### 🌐 Web & Research Capabilities
-- **Web Surfer**: Can search the web (Google/Bing) and read page content to answer current questions.
-- **Smart Parsing**: Intelligent extraction of article text, bypassing ads and clutter.
-
-### 👁️ Vision & Perception (Multi-Modal)
+### 👁️ Vision & Perception
 - **Drag & Drop Vision**: Drop images into the chat to analyze them with Gemini Vision.
 - **Local OCR**: Extract text from images locally using Windows built-in OCR engine (offline & private).
-- **Local Whisper**: Transcribe audio and video files (`.wav`, `.mp4`) locally using `Whisper.net`.
-
-### 🛡️ Safety & Security
-- **Human-in-the-Loop**: Critical actions (like file system writes or PowerShell execution) require your explicit approval.
-- **Sandboxed**: File operations are restricted to your User Documents folder.
+- **Local Whisper**: Transcribe audio/video files locally.
 
 ## 🚀 Getting Started
 
@@ -40,11 +42,13 @@ It is designed to be your **proactive digital sidekick**, capable of remembering
 - [Gemini API Key](https://aistudio.google.com/) (Required for Cloud/Vision features).
 
 ### Installation
-1.  Clone this repository.
-2.  Open `super-agent.sln` in Visual Studio 2022.
-3.  Build and Run (F5).
-4.  On first launch, enter your Gemini API Key in `secrets.json` or environment variables.
-5.  *Optional*: Local models will be downloaded automatically on first use (~2GB for LLM, ~140MB for Whisper).
+1.  **Download** the latest release or clone the repository.
+2.  **Run** `super-agent.exe`.
+3.  **Configure**: On first launch, enter your Gemini API Key in `secrets.json` or allow the agent to prompt you.
+4.  **Skills**:
+    - Navigate to `%APPDATA%\OpenClaw\Skills`.
+    - Create a folder (e.g., `CheckWeather`) and add your `script.ps1`.
+    - Click the 🧩 icon in the app to manage them.
 
 ## 🛠️ Tech Stack
 - **UI**: WinUI 3 (Windows App SDK)
@@ -53,10 +57,10 @@ It is designed to be your **proactive digital sidekick**, capable of remembering
 - **Local Inference**: ONNX Runtime GenAI, Whisper.net
 - **Database**: SQLite + Vector Embeddings
 
-## 🔮 Future Roadmap
-- [ ] **Real-time Voice Mode**: Talk to your agent naturally.
-- [ ] **Agentic Workflows**: Multi-step complex task execution.
-- [ ] **Plugin System**: Community-driven tools extensions.
+## 🔮 Roadmap
+- [ ] **Voice Interaction**: Full real-time speech loop.
+- [ ] **Calendar Integration**: Native Outlook/Google Calendar support.
+- [ ] **Remote Gateway**: Secure control via mobile.
 
 ---
 *Made with ❤️ in California*

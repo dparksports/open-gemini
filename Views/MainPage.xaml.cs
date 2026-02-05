@@ -138,6 +138,13 @@ public sealed partial class MainPage : Page
         await SendMessage();
     }
 
+    private async void SkillsButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SkillsDialog();
+        dialog.XamlRoot = this.XamlRoot;
+        await dialog.ShowAsync();
+    }
+
     private async void RedownloadButton_Click(object sender, RoutedEventArgs e)
     {
         InputBox.IsEnabled = false;

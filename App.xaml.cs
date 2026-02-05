@@ -59,6 +59,7 @@ namespace OpenClaw.Windows
                     services.AddSingleton<Services.AudioTranscriberService>(); // Local Whisper
                     services.AddSingleton<Services.ToastService>(); // Notifications
                     services.AddSingleton<Services.FileWatcherService>(); // File Sensor
+                    services.AddSingleton<Services.Skills.SkillService>(); // Skill System
 
                     services.AddHostedService<Services.CoreAgentBackgroundService>(); // Background Heartbeat
 
@@ -83,6 +84,20 @@ namespace OpenClaw.Windows
                 rootFrame.NavigationFailed += OnNavigationFailed;
                 window.Content = rootFrame;
             }
+
+            // Initialize Skills
+            var skillService = Host.Services.GetRequiredService<Services.Skills.SkillService>();
+            var toolRegistry = Host.Services.GetRequiredService<Services.Tools.ToolRegistry>();
+            
+            // Fire and forget, but ideally we wait. Since it's local I/O it's fast.
+            Task.Run(async () => 
+            {
+                await skillService.RefreshSkillsAsync();
+                foreach (var skill in skillService.GetSkills())
+                {
+                    toolRegistry.RegisterTool(new Services.Skills.SkillAdapter(skill));
+                }
+            }).Wait();
 
             _ = rootFrame.Navigate(typeof(MainPage), e.Arguments);
             
