@@ -19,6 +19,24 @@ public class GoogleGeminiService : IAiService
     {
         _httpClient = new HttpClient();
         _apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "";
+        
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            try
+            {
+                var secretPath = System.IO.Path.Combine(AppContext.BaseDirectory, "secrets.json");
+                if (System.IO.File.Exists(secretPath))
+                {
+                    var json = System.IO.File.ReadAllText(secretPath);
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("GeminiApiKey", out var prop))
+                    {
+                        _apiKey = prop.GetString() ?? "";
+                    }
+                }
+            }
+            catch { /* Ignore config errors, api key remains empty */ }
+        }
     }
 
     public async IAsyncEnumerable<string> GetStreamingResponseAsync(string systemPrompt, string userPrompt)
