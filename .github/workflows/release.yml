@@ -25,7 +25,7 @@ jobs:
       run: dotnet restore super-agent.csproj
 
     - name: Publish
-      run: dotnet publish super-agent.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o publish_output
+      run: dotnet publish super-agent.csproj -c Release -f net8.0-windows10.0.19041.0 -r win-x64 --self-contained true -p:PublishSingleFile=false -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -o publish_output
 
     - name: Compress Release
       run: Compress-Archive -Path publish_output/* -DestinationPath SuperAgent-${{ github.ref_name }}-win-x64.zip
