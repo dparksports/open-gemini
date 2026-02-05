@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using OpenClaw.Windows.Services;
 using OpenClaw.Windows.Views;
 
 namespace OpenClaw.Windows
@@ -27,8 +28,9 @@ namespace OpenClaw.Windows
             Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
+                    services.AddSingleton<Services.OnnxLocalAiService>();
+                services.AddSingleton<ISlackService, SlackService>();
                     services.AddSingleton<Services.IAiService, Services.HybridAiService>();
-                    services.AddHostedService<Services.SidecarService>();
                 })
                 .Build();
         }
@@ -50,6 +52,13 @@ namespace OpenClaw.Windows
             }
 
             _ = rootFrame.Navigate(typeof(MainPage), e.Arguments);
+            
+            // Resize Window to be smaller (approx 50%)
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
+            var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            appWindow.Resize(new global::Windows.Graphics.SizeInt32(500, 700));
+            
             window.Activate();
         }
 

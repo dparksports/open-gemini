@@ -18,20 +18,35 @@
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="models:ChatMessage">
                     <StackPanel Margin="10">
-                        <TextBlock Text="{Binding Role}" FontWeight="Bold" Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
-                        <TextBlock Text="{Binding Content}" TextWrapping="WrapWholeWords" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Role}" FontWeight="Bold" Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
+                            <Button Grid.Column="1" Content="Copy" Click="CopyButton_Click" Tag="{Binding Content}" FontSize="10" Padding="4,2" Height="24" Margin="0,0,0,4" />
+                        </Grid>
+                        <TextBlock Text="{Binding Content}" TextWrapping="WrapWholeWords" IsTextSelectionEnabled="True" />
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
 
-        <Grid Grid.Row="1" Margin="20">
+        <StackPanel Grid.Row="1" Margin="20,0,20,10" x:Name="DownloadStatusPanel" Visibility="Collapsed">
+             <TextBlock x:Name="DownloadStatusText" Text="Downloading Model..." HorizontalAlignment="Center" Margin="0,0,0,5"/>
+             <ProgressBar x:Name="DownloadProgressBar" Maximum="100" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="20" x:Name="InputGrid">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox x:Name="InputBox" PlaceholderText="Ask OpenClaw..." KeyUp="InputBox_KeyUp"/>
-            <Button Grid.Column="1" Content="Send" Click="SendButton_Click" Margin="10,0,0,0" Style="{StaticResource AccentButtonStyle}"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0">
+                <Button x:Name="SendButton" Content="Send" Click="SendButton_Click" Style="{StaticResource AccentButtonStyle}" Margin="0,0,4,0"/>
+                <Button Content="Download Model" Click="RedownloadButton_Click" ToolTipService.ToolTip="Force Re-download Model"  />
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

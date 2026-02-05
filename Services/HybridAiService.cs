@@ -6,31 +6,46 @@ namespace OpenClaw.Windows.Services;
 
 public class HybridAiService : IAiService
 {
+    private readonly OnnxLocalAiService _localService;
+
+    public HybridAiService(OnnxLocalAiService localService)
+    {
+        _localService = localService;
+    }
+
     public async IAsyncEnumerable<string> GetStreamingResponseAsync(string systemPrompt, string userPrompt)
     {
         bool isLocal = IsSimpleQuery(userPrompt);
-        string prefix = isLocal ? "[Local LLM] 🦞 " : "[Gemini Cloud] ✨ ";
-
-        // Simulate streaming delay
-        await Task.Delay(300);
-
-        yield return prefix;
         
-        string responseText = isLocal 
-            ? $"Processed locally: {userPrompt}" 
-            : $"Processed by Gemini: {userPrompt} (Reasoning...)";
-
-        var words = responseText.Split(' ');
-        foreach (var word in words)
+        if (isLocal)
         {
-            await Task.Delay(50); // Typing effect
-            yield return word + " ";
+            yield return "[Local] 🦞 ";
+            await foreach (var chunk in _localService.GetStreamingResponseAsync(systemPrompt, userPrompt))
+            {
+                yield return chunk;
+            }
+        }
+        else
+        {
+             yield return "[Gemini] ✨ (Simulated) ";
+             // Placeholder for real Gemini implementation
+             await Task.Delay(500);
+             yield return $"Simulated Gemini response to: {userPrompt}";
         }
     }
 
-    private bool IsSimpleQuery(string query)
+    public async Task RedownloadModelAsync()
+    {
+        // For hybrid, we assume we want to redownload the local model if possible.
+        if (_localService is OnnxLocalAiService local)
+        {
+            await local.RedownloadModelAsync();
+        }
+    }
+
+    private bool IsSimpleQuery(string prompt)
     {
         // PoC Logic: Short queries go to Local, Long go to Gemini
-        return query.Length < 20 || query.Contains("time", StringComparison.OrdinalIgnoreCase);
+        return prompt.Length < 50 || prompt.Contains("time", StringComparison.OrdinalIgnoreCase);
     }
 }
