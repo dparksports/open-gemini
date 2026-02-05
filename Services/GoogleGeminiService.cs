@@ -12,11 +12,13 @@ namespace OpenClaw.Windows.Services;
 public class GoogleGeminiService : IAiService
 {
     private readonly HttpClient _httpClient;
+    private readonly Services.Tools.ToolRegistry? _toolRegistry;
     private string _apiKey;
 
-    public GoogleGeminiService()
+    public GoogleGeminiService(Services.Tools.ToolRegistry? toolRegistry = null)
     {
         _httpClient = new HttpClient();
+        _toolRegistry = toolRegistry;
         _apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY") ?? "";
         
         if (string.IsNullOrEmpty(_apiKey))
@@ -54,74 +56,177 @@ public class GoogleGeminiService : IAiService
                 foreach (var model in modelsElement.EnumerateArray())
                 {
                     var name = model.GetProperty("name").GetString();
-                    // name is typically "models/gemini-pro", we want just "gemini-pro" usually, 
-                    // or we keep full name and strip "models/" for display? 
-                    // The generate API expects "models/gemini-pro" or just "gemini-pro" depending on version.
-                    // The error message said "models/gemini-1.5-flash is not found", implying it expects it without "models/" prefix or specific version.
-                    // Let's store the full resource name but strip "models/" for the ID we use in valid URLs if the URL structure is .../models/{modelId}:generate
-                    
                     if (name != null && name.Contains("gemini") && !name.Contains("embedding") && !name.Contains("robotics") && !name.Contains("competitor"))
                     {
                         models.Add(name.Replace("models/", ""));
                     }
                 }
             }
-            return models.OrderByDescending(m => m).ToList(); // Newest versions first usually
+            return models.OrderByDescending(m => m).ToList();
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Failed to list models: {ex.Message}");
-            return new List<string> { "gemini-1.5-flash", "gemini-1.5-pro" }; // Fallback
+            return new List<string> { "gemini-1.5-flash", "gemini-1.5-pro" }; 
         }
     }
 
-    public async IAsyncEnumerable<string> GetStreamingResponseAsync(string systemPrompt, string userPrompt)
+    public async IAsyncEnumerable<OpenClaw.Windows.Models.AgentResponse> GetStreamingResponseAsync(string systemPrompt, string userPrompt)
     {
         // For V1 stability, we will fetch the full response and yield it.
-        // True streaming requires parsing the complex JSON array stream from Google.
+        var response = await GenerateContentAsync(systemPrompt + "\n\n" + userPrompt);
         
-        var fullText = await GenerateContentAsync(systemPrompt + "\n\n" + userPrompt);
-        
-        // Simulate streaming for UI smoothness
-        var words = fullText.Split(' ');
-        foreach (var word in words)
+        if (response.Text != null)
         {
-            yield return word + " ";
-            await Task.Delay(10); // Tiny delay for effect
+            // Simulate streaming for UI smoothness
+            var words = response.Text.Split(' ');
+            foreach (var word in words)
+            {
+                yield return new OpenClaw.Windows.Models.AgentResponse { Text = word + " " };
+                await Task.Delay(10); 
+            }
+        }
+        
+        if (response.FunctionCalls != null && response.FunctionCalls.Count > 0)
+        {
+            yield return response;
         }
     }
     
-    // We'll overload this to use the non-streaming endpoint for stability in V1
-    public async Task<string> GenerateContentAsync(string prompt)
+    public async Task<OpenClaw.Windows.Models.AgentResponse> GenerateContentAsync(string prompt)
     {
-         if (string.IsNullOrEmpty(_apiKey)) return "GEMINI_API_KEY missing";
+         if (string.IsNullOrEmpty(_apiKey)) return new OpenClaw.Windows.Models.AgentResponse { Text = "GEMINI_API_KEY missing" };
 
          var url = $"https://generativelanguage.googleapis.com/v1beta/models/{CurrentModel}:generateContent?key={_apiKey}";
          
+         object? toolsPayload = null;
+         if (_toolRegistry != null)
+         {
+             var functions = _toolRegistry.GetGeminiFunctionDeclarations();
+             toolsPayload = new[] 
+             { 
+                 new { function_declarations = functions } 
+             };
+         }
+
          var requestBody = new
          {
              contents = new[]
              {
                  new { role = "user", parts = new[] { new { text = prompt } } }
-             }
+             },
+             tools = toolsPayload
          };
          
-         var response = await _httpClient.PostAsync(url, new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json"));
+         var jsonOptions = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+         var content = new StringContent(JsonSerializer.Serialize(requestBody, jsonOptions), Encoding.UTF8, "application/json");
+
+         var response = await _httpClient.PostAsync(url, content);
          var json = await response.Content.ReadAsStringAsync();
          
-         if (!response.IsSuccessStatusCode) return $"Error: {json}";
+         if (!response.IsSuccessStatusCode) return new OpenClaw.Windows.Models.AgentResponse { Text = $"Error: {json}" };
 
          try 
          {
              using var doc = JsonDocument.Parse(json);
-             var text = doc.RootElement.GetProperty("candidates")[0].GetProperty("content").GetProperty("parts")[0].GetProperty("text").GetString();
-             return text ?? "";
+             var candidates = doc.RootElement.GetProperty("candidates");
+             if (candidates.GetArrayLength() == 0) return new OpenClaw.Windows.Models.AgentResponse { Text = "No response candidates." };
+
+             var contentPart = candidates[0].GetProperty("content").GetProperty("parts")[0];
+             
+             // Check for function call
+             if (contentPart.TryGetProperty("functionCall", out var functionCall))
+             {
+                 var functionName = functionCall.GetProperty("name").GetString() ?? "unknown";
+                 var args = functionCall.GetProperty("args").ToString(); // Get raw JSON of args
+                 
+                 return new OpenClaw.Windows.Models.AgentResponse 
+                 { 
+                     FunctionCalls = new List<OpenClaw.Windows.Models.FunctionCall> 
+                     { 
+                         new OpenClaw.Windows.Models.FunctionCall { Name = functionName, JsonArgs = args } 
+                     } 
+                 };
+             }
+             
+             // Standard text
+             if (contentPart.TryGetProperty("text", out var textProp))
+             {
+                 return new OpenClaw.Windows.Models.AgentResponse { Text = textProp.GetString() };
+             }
+             
+             return new OpenClaw.Windows.Models.AgentResponse { Text = "Empty response." };
          }
-         catch 
+         catch (Exception ex)
          {
-             return "Error parsing Gemini response.";
+             return new OpenClaw.Windows.Models.AgentResponse { Text = $"Error parsing Gemini response: {ex.Message}" };
          }
     }
 
-    Task IAiService.RedownloadModelAsync() => Task.CompletedTask; // Not applicable
+    public async Task<OpenClaw.Windows.Models.AgentResponse> GenerateContentAsync(List<OpenClaw.Windows.Models.GeminiContent> history)
+    {
+         if (string.IsNullOrEmpty(_apiKey)) return new OpenClaw.Windows.Models.AgentResponse { Text = "GEMINI_API_KEY missing" };
+
+         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{CurrentModel}:generateContent?key={_apiKey}";
+         
+         object? toolsPayload = null;
+         if (_toolRegistry != null)
+         {
+             var functions = _toolRegistry.GetGeminiFunctionDeclarations();
+             toolsPayload = new[] 
+             { 
+                 new { function_declarations = functions } 
+             };
+         }
+
+         var requestBody = new
+         {
+             contents = history,
+             tools = toolsPayload
+         };
+         
+         var jsonOptions = new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+         var content = new StringContent(JsonSerializer.Serialize(requestBody, jsonOptions), Encoding.UTF8, "application/json");
+
+         var response = await _httpClient.PostAsync(url, content);
+         var json = await response.Content.ReadAsStringAsync();
+         
+         if (!response.IsSuccessStatusCode) return new OpenClaw.Windows.Models.AgentResponse { Text = $"Error: {json}" };
+
+         try 
+         {
+             using var doc = JsonDocument.Parse(json);
+             var candidates = doc.RootElement.GetProperty("candidates");
+             if (candidates.GetArrayLength() == 0) return new OpenClaw.Windows.Models.AgentResponse { Text = "No response candidates." };
+
+             var contentPart = candidates[0].GetProperty("content").GetProperty("parts")[0];
+             
+             if (contentPart.TryGetProperty("functionCall", out var functionCall))
+             {
+                 var functionName = functionCall.GetProperty("name").GetString() ?? "unknown";
+                 var args = functionCall.GetProperty("args").ToString(); 
+                 
+                 return new OpenClaw.Windows.Models.AgentResponse 
+                 { 
+                     FunctionCalls = new List<OpenClaw.Windows.Models.FunctionCall> 
+                     { 
+                         new OpenClaw.Windows.Models.FunctionCall { Name = functionName, JsonArgs = args } 
+                     } 
+                 };
+             }
+             
+             if (contentPart.TryGetProperty("text", out var textProp))
+             {
+                 return new OpenClaw.Windows.Models.AgentResponse { Text = textProp.GetString() };
+             }
+             
+             return new OpenClaw.Windows.Models.AgentResponse { Text = "Empty response." };
+         }
+         catch (Exception ex)
+         {
+             return new OpenClaw.Windows.Models.AgentResponse { Text = $"Error parsing Gemini response: {ex.Message}" };
+         }
+    }
+
+    Task IAiService.RedownloadModelAsync() => Task.CompletedTask;
 }

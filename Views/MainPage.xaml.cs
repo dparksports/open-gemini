@@ -15,6 +15,7 @@ public sealed partial class MainPage : Page
 {
     private readonly IAiService _aiService;
     private readonly ISlackService _slackService;
+    private readonly AgentOrchestrator _agent;
     public ObservableCollection<ChatMessage> Messages { get; } = new();
 
     public MainPage()
@@ -25,6 +26,7 @@ public sealed partial class MainPage : Page
         var services = ((App)Application.Current).Host.Services;
         _aiService = services.GetRequiredService<IAiService>();
         _slackService = services.GetRequiredService<ISlackService>();
+        _agent = services.GetRequiredService<AgentOrchestrator>();
         
         if (_aiService is OnnxLocalAiService localService)
         {
@@ -34,9 +36,24 @@ public sealed partial class MainPage : Page
         _slackService.MessageReceived += OnSlackMessageReceived;
         _ = _slackService.ConnectAsync();
 
-        Messages.Add(new ChatMessage("Assistant", "Hello! I am OpenGemini. I use a Hybrid AI engine (Local + Gemini)."));
-        
+        _ = LoadHistoryAsync();
         _ = LoadGeminiModels();
+    }
+    
+    private async Task LoadHistoryAsync()
+    {
+        var history = await _agent.LoadHistoryAsync();
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            foreach (var msg in history)
+            {
+                Messages.Add(msg);
+            }
+            if (Messages.Count == 0)
+            {
+                Messages.Add(new ChatMessage("Assistant", "Hello! I am OpenGemini. I use a Hybrid AI engine (Local + Gemini)."));
+            }
+        });
     }
     
     private async Task LoadGeminiModels()
@@ -166,7 +183,8 @@ public sealed partial class MainPage : Page
 
         try 
         {
-            await foreach (var chunk in _aiService.GetStreamingResponseAsync("", userText))
+            // Use AgentOrchestrator Loop
+            await foreach (var chunk in _agent.ChatAsync(userText, Messages))
             {
                 assistantMsg.Content += chunk;
             }

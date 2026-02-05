@@ -73,7 +73,7 @@ public class OnnxLocalAiService : IAiService, IDisposable
         }
     }
 
-    public async IAsyncEnumerable<string> GetStreamingResponseAsync(string systemPrompt, string userPrompt)
+    public async IAsyncEnumerable<OpenClaw.Windows.Models.AgentResponse> GetStreamingResponseAsync(string systemPrompt, string userPrompt)
     {
         if (_model == null || _tokenizer == null)
         {
@@ -102,7 +102,7 @@ public class OnnxLocalAiService : IAiService, IDisposable
                  part = _tokenizer.Decode(newToken);
              });
 
-             yield return part;
+             yield return new OpenClaw.Windows.Models.AgentResponse { Text = part };
         }
     }
 

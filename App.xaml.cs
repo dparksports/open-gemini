@@ -2,6 +2,8 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using OpenClaw.Windows.Services;
+using OpenClaw.Windows.Services.Data;
+using OpenClaw.Windows.Services.Tools;
 using OpenClaw.Windows.Views;
 
 namespace OpenClaw.Windows
@@ -28,9 +30,19 @@ namespace OpenClaw.Windows
             Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
                 .ConfigureServices((context, services) =>
                 {
+                    services.AddSingleton<Services.Data.ChatContextDb>();
                     services.AddSingleton<Services.OnnxLocalAiService>();
                     services.AddSingleton<Services.GoogleGeminiService>();
                     services.AddSingleton<ISlackService, SlackService>();
+                    services.AddSingleton<Services.SafetyService>();
+                    services.AddSingleton<Services.AgentService>();
+                    
+                    // Tools
+                    services.AddSingleton<Services.Tools.ToolRegistry>();
+                    services.AddSingleton<Services.AgentOrchestrator>();
+                    services.AddSingleton<IAiTool, Services.Tools.GetSystemTimeTool>();
+                    services.AddSingleton<IAiTool, Services.Tools.ReadFileTool>();
+                    
                     services.AddSingleton<Services.IAiService, Services.HybridAiService>();
                 })
                 .Build();

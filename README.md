@@ -1,56 +1,54 @@
-# OpenGemini 🌌
+# OpenGemini for Windows
 
-A native Windows 11 implementation of the OpenGemini AI Assistant, featuring a Hybrid AI Engine (Local Phi-3 + Google Gemini) and Slack integration.
+![OpenGemini Screenshot](assets/screenshot.png)
 
-![OpenGemini Screenshot](Assets/opengemini_screenshot.png)
+OpenGemini is a powerful, native Windows application that brings the power of **Google Gemini** and **Local On-Device AI** (via ONNX Runtime GenAI) to your desktop.
+
+Built with **WinUI 3** and **C#**, it demonstrates a modern Agentic architecture capable of autonomous tool execution, persistence, and hybrid model orchestration.
 
 ## Features
 
-### 🧠 Hybrid AI Engine
--   **Local Intelligence**: Runs **Phi-3-mini-4k-instruct** locally on your device using **OnnxRuntime w/ DirectML**.
-    -   **Zero Cost**: No API fees for local queries.
-    -   **Privacy First**: Processing happens on your machine.
-    -   **NPU/GPU Accelerated**: Automatically uses your dedicated GPU (e.g., NVIDIA RTX 5090) or NPU.
--   **Cloud Intelligence**: seamlessly falls back to **Google Gemini** for complex reasoning (Simulated/Planned).
-
-### 💬 Connectivity
--   **Native Slack Integration**: 
-    -   Connects via **Socket Mode** (no firewall changes needed).
-    -   Chat with your bot vertically from Slack or the App.
-    -   Supports two-way communication.
--   **WinUI 3 Interface**: Modern, responsive, and native Windows experience.
-
-### 🛠️ capabilities
--   **Auto-Healing Model**: Automatically downloads the ~2.2GB Model if missing or corrupted.
--   **Resilient Downloads**: Verifies file integrity and supports resume/retry with real-time byte progress.
--   **Copy Response**: One-click copy for AI responses.
--   **Compact Mode**: Launches in a messenger-style vertical window.
-
-## Technical Details
--   **Language**: C# / .NET 9
--   **UI Framework**: WinUI 3 (Windows App SDK)
--   **AI Runtime**: ONNX Runtime GenAI (DirectML)
--   **Slack Library**: SlackNet
+- **🧠 Hybrid AI Engine**: Seamlessly switch between cloud-based **Gemini 2.0 Flash/Pro** models and local **Phi-3/Llama-3** models running on-device.
+- **🛠️ Agentic Tooling**: The AI can autonomously execute tools to perform tasks:
+    - `get_system_time`: Check the local system time.
+    - `read_file`: Securely read files from your Documents folder.
+- **🔄 Autonomous Agent Loop**: Features a "Think-Act-Observe" loop where the agent can perform multiple steps to solve complex queries.
+- **💾 Persistence**: Built-in SQLite database saves your conversation history, including tool outputs and execution logs, across app restarts.
+- **💬 Slack Integration**: Communicate with your agent via Slack (optional).
 
 ## Getting Started
 
 ### Prerequisites
--   Windows 10/11 (Developer Mode enabled recommended)
--   Target GPU for acceleration (NVIDIA/AMD/Intel)
+
+- Windows 10 (1809+) or Windows 11
+- [.NET 8+ SDK](https://dotnet.microsoft.com/download)
+- [Google Gemini API Key](https://aistudio.google.com/)
 
 ### Installation
-1.  Clone the repository.
-2.  Open in VS Code or Visual Studio.
-3.  Run `dotnet run`.
 
-### Configuration (Slack)
-To enable Slack, set the following environment variables:
--   `SLACK_APP_TOKEN`: `xapp-...`
--   `SLACK_BOT_TOKEN`: `xoxb-...`
+1. Clone the repository.
+2. Set your API Key:
+   ```powershell
+   setx GEMINI_API_KEY "your_api_key_here"
+   ```
+3. Build and Run:
+   ```powershell
+   dotnet build
+   dotnet run
+   ```
 
-## Model Management
-The app will automatically download the required models on first launch.
-If you need to force a re-download, click the **"Download Model"** button in the UI.
+## Architecture
+
+OpenGemini uses a clean, service-oriented architecture:
+
+- **AgentOrchestrator**: Manages the core agent loop.
+- **GoogleGeminiService**: Handles API communication, maintaining full conversation history (User/Model/Function turns).
+- **ToolRegistry**: Manages available tools and generates JSON schemas for the LLM.
+- **ChatContextDb**: Persists all events to `messages.db` in `%AppData%`.
 
 ## License
-MIT
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+---
+Made with ❤️ in California
