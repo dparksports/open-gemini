@@ -78,7 +78,7 @@ namespace OpenClaw.Windows
         protected override async void OnLaunched(LaunchActivatedEventArgs e)
         {
             window ??= new Window();
-            window.Title = "OpenGemini";
+            window.Title = "Super Agent 🦸‍♂️";
 
             if (window.Content is not Frame rootFrame)
             {
@@ -108,6 +108,9 @@ namespace OpenClaw.Windows
             var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
             var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
             appWindow.Resize(new global::Windows.Graphics.SizeInt32(780, 700));
+            
+            // Set Window Icon (Manual set required for unpackaged apps)
+            appWindow.SetIcon(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app_icon.ico"));
             
             window.Activate();
 
@@ -207,8 +210,8 @@ namespace OpenClaw.Windows
         {
             _trayIcon = new H.NotifyIcon.TaskbarIcon
             {
-                // Use a more standard asset
-                IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Square44x44Logo.scale-200.png")),
+                // Use the new Super Agent logo
+                IconSource = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Square44x44Logo.png")),
                 ToolTipText = "Super Agent 🦸‍♂️",
             };
             _trayIcon.LeftClickCommand = new StandardUICommand(StandardUICommandKind.None) { Command = new RelayCommand(() => ShowWindow()) };
