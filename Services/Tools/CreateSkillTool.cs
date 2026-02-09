@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OpenClaw.Windows.Services.Tools
 {
@@ -14,7 +15,7 @@ namespace OpenClaw.Windows.Services.Tools
     public class CreateSkillTool : IAiTool
     {
         private readonly Skills.SkillService _skillService;
-        private readonly ToolRegistry _toolRegistry;
+        private readonly IServiceProvider _serviceProvider;
 
         public string Name => "create_skill";
         public string Description => "Creates a new dynamic skill (tool) that the agent can use in the future. Writes a SKILL.md manifest and script file, then reloads the skill registry. Use 'skill_format' action to learn the required file format.";
@@ -70,10 +71,10 @@ namespace OpenClaw.Windows.Services.Tools
             }
         };
 
-        public CreateSkillTool(Skills.SkillService skillService, ToolRegistry toolRegistry)
+        public CreateSkillTool(Skills.SkillService skillService, IServiceProvider serviceProvider)
         {
             _skillService = skillService;
-            _toolRegistry = toolRegistry;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<string> ExecuteAsync(string jsonArgs)
@@ -141,9 +142,10 @@ namespace OpenClaw.Windows.Services.Tools
 
                 // Reload skill registry
                 await _skillService.RefreshSkillsAsync();
+                var toolRegistry = _serviceProvider.GetRequiredService<ToolRegistry>();
                 foreach (var skill in _skillService.GetSkills())
                 {
-                    _toolRegistry.RegisterTool(new Skills.SkillAdapter(skill));
+                    toolRegistry.RegisterTool(new Skills.SkillAdapter(skill));
                 }
 
                 return $"✅ Skill '{skillName}' created successfully!\n" +
