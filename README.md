@@ -1,66 +1,68 @@
 # Super Agent 🦸‍♂️
 
-![Super Agent Dashboard](Assets/dashboard_v2.png)
+![Super Agent Dashboard](Assets/app_dashboard.png)
 
-> **[📥 Download v1.2.1 (Win-x64)](https://github.com/dparksports/open-gemini/releases/download/v1.2.1/super-agent-v1.2.1-win-x64.zip)**
+**Super Agent** is an autonomous AI assistant for Windows that bridges the gap between local execution and cloud intelligence. It lives in your system tray, manages its own Python environment, and can extend its capabilities dynamically through a plugin-based skill system.
 
-**Super Agent** is a next-generation AI assistant for Windows that combines the power of cloud-based reasoning with the privacy and speed of local inferencing.
+It is designed to be **proactive**, **private**, and **powerful**—capable of browsing the web, running code, seeing your screen, and hearing your voice.
 
-It is designed to be your **proactive digital sidekick**, living in your system tray, watching your files, and extending its capabilities through a dynamic skill system—compatible with the OpenClaw ecosystem.
+## 🌟 Key Capabilities
 
-## 🌟 Key Features
-
-### 🧩 Dynamic Skills Ecosystem (New!)
-- **OpenClaw Compatible**: Simply drop existing OpenClaw skills into `%APPDATA%\OpenClaw\Skills`.
-- **Polyglot Runtime**: Supports both **PowerShell** (`.ps1`) for deep Windows automation and **Python** (`.py`) for data processing.
-- **Hot-Reload**: Add new skills on the fly without restarting the agent.
-
-### 🧠 Hybrid AI Architecture
-- **Cloud Power**: Uses **Google/Azure/OpenAI/Grok** for complex reasoning, coding, and creative tasks.
-- **Local Speed**: Uses SOTA Local LLMs for fast, offline chat and simple queries.
-- **Smart Routing**: Automatically routes requests to the best model based on complexity and privacy settings.
-
-### 🤖 Autonomous & Proactive
-- **System Tray Agent**: Lives exclusively in the tray. Minimizes out of your way but is always one click away.
-- **Background Heartbeat**: Runs a background service loop to monitor tasks and health.
-- **File Sensors**: Watches your file system for changes to proactively offer help (e.g., "I see you added a new PDF, want me to summarize it?").
-
-### 💾 Long-Term Memory (RAG)
-- **Never Forgets**: Stores conversations and memories in a local SQLite vector database.
-- **Semantic Search**: Automatically retrieves relevant past interactions to provide context-aware answers.
-- **Privacy-First**: Your memories live on your device, not on a remote server.
+### 🧠 Autonomous Execution
+- **Run Python Code**: Automatically writes and executes Python scripts in a managed, isolated environment (`venv`).
+- **Browse the Web**: Uses headless Chromium (via Playwright) to research topics, scrape data, and summarize web pages.
+- **File Operations**: Reads, writes, and manages files on your local system with permission.
 
 ### 👁️ Vision & Perception
-- **Drag & Drop Vision**: Drop images into the chat to analyze them with LVM.
-- **Local OCR**: Extract text from images locally using LVM (offline & private).
-- **Local Whisper**: Transcribe audio/video files locally.
+- **Vision Language Model**: Extracts text and understands images using local VLM (offline).
+- **Screen Awareness**: Can "see" your screen contents to assist with on-screen tasks.
+- **Computer Vision**: Analyzes images for object detection and scene understanding.
+
+### 🗣️ Voice & Communications
+- **Batch Attention 2 Layer Fusion**: Transcribes audio and video files locally using advanced fusion models.
+- **VoIP Calling**: Capable of placing SIP calls to interact with real-world phone systems.
+- **Messaging**: Sends notifications and alerts via Apprise integration.
+
+### 🧩 Dynamic Skill System
+- **Hot-Swappable Skills**: Drop Python or PowerShell scripts into `%APPDATA%\OpenClaw\Skills` to instantly teach the agent new tricks.
+- **Self-Improving**: The agent can write its own skills to solve recurring problems.
+
+### 💾 Long-Term Memory
+- **Vector Database**: Memorizes conversations and facts using local SQLite with vector embeddings.
+- **Context-Aware**: Recalls past interactions to provide continuity across sessions.
+
+## 🛠️ Technology Stack
+
+- **Core**: Windows App SDK (WinUI 3) / .NET 10 (C#)
+- **AI Orchestration**: Microsoft Semantic Kernel
+- **Local Inference**: ONNX Runtime GenAI, Whisper.net
+- **Scripting Engine**: Python 3.10+ (Managed Venv), PowerShell Core
+- **Database**: SQLite (Data) + Qdrant/Faiss (Vector Memory)
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Windows 10 (Build 19041) or higher.
-- [Gemini API Key](https://aistudio.google.com/) (Required for Cloud/Vision features).
+- **OS**: Windows 10 (Build 19041) or Windows 11.
+- **Python**: Python 3.10+ installed and added to `PATH`.
+- **API Keys**: A Gemini API key (for reasoning) or OpenAI key.
 
 ### Installation
-1.  **Download** the latest release or clone the repository.
-2.  **Run** `super-agent.exe`.
-3.  **Configure**: On first launch, enter your Gemini API Key in `secrets.json` or allow the agent to prompt you.
-4.  **Skills**:
-    - Navigate to `%APPDATA%\OpenClaw\Skills`.
-    - Create a folder (e.g., `CheckWeather`) and add your `script.ps1`.
-    - Click the 🧩 icon in the app to manage them.
+1.  **Download** the latest release (`super-agent-win-x64.zip`) from GitHub.
+2.  **Extract** to a folder of your choice.
+3.  **Run** `super-agent.exe`.
+4.  **Setup**:
+    - The agent will automatically initialize its Python environment on first run (this may take a few minutes).
+    - Enter your API keys when prompted.
+5.  **Usage**:
+    - Look for the 🦸‍♂️ icon in your system tray.
+    - Click to open the chat interface.
+    - Type or speak your request!
 
-## 🛠️ Tech Stack
-- **UI**: WinUI 3 (Windows App SDK)
-- **Language**: C# / .NET 10
-- **AI Orchestration**: Semantic Kernel
-- **Local Inference**: ONNX Runtime GenAI, Whisper.net
-- **Database**: SQLite + Vector Embeddings
+## 🔒 Privacy & Security
 
-## 🔮 Roadmap
-- [ ] **Voice Interaction**: Full real-time speech loop.
-- [ ] **Calendar Integration**: Native Outlook/Google Calendar support.
-- [ ] **Remote Gateway**: Secure control via mobile.
+- **Local First**: Transcription, OCR, and Memory storage happen locally on your device.
+- **Sandboxed Execution**: Python code runs in a dedicated virtual environment.
+- **User Control**: You permit sensitive actions (like file deletion or network calls).
 
 ---
-*Made with ❤️ in California*
+*Built with ❤️ for the AI Engineer 2026 Hackathon*
