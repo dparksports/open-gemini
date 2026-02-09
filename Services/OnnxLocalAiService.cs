@@ -45,14 +45,7 @@ public class OnnxLocalAiService : IAiService, IDisposable
 
             if (!modelExists)
             {
-                 var downloadService = new ModelDownloadService();
-                 
-                 var progressReporter = new Progress<double>(p => 
-                 {
-                     DownloadProgressChanged?.Invoke("Downloading Model...", p);
-                 });
-
-                 await downloadService.DownloadModelAsync(modelPath, null, progressReporter);
+                throw new FileNotFoundException("Model files not found. Please download the model in Settings.", modelPath);
             }
 
             try 
@@ -153,9 +146,52 @@ public class OnnxLocalAiService : IAiService, IDisposable
         }
     }
 
+    public async Task<OpenClaw.Windows.Models.AgentResponse> GenerateContentAsync(string prompt)
+    {
+        // Simple wrapper, not streaming
+        var response = new StringBuilder();
+        await foreach (var chunk in GetStreamingResponseAsync("", prompt))
+        {
+            if (chunk.Text != null)
+            {
+                response.Append(chunk.Text);
+            }
+        }
+        return new OpenClaw.Windows.Models.AgentResponse { Text = response.ToString() };
+    }
+
+    public Task<OpenClaw.Windows.Models.AgentResponse> GenerateContentAsync(List<OpenClaw.Windows.Models.GeminiContent> history)
+    {
+        // Local model doesn't support full history yet, just use the last user message
+        var lastMessage = history.Count > 0 ? history[^1].Parts[0].Text : "";
+        return GenerateContentAsync(lastMessage);
+    }
+
+    public async Task SwitchModelAsync(string modelPath)
+    {
+        await _initLock.WaitAsync();
+        try
+        {
+            // Dispose existing
+            _model?.Dispose();
+            _tokenizer?.Dispose();
+            _model = null;
+            _tokenizer = null;
+            _isInitialized = false;
+
+            // For now, just reinitialize with the existing path
+            await InitializeAsync();
+        }
+        finally
+        {
+            _initLock.Release();
+        }
+    }
+
     public void Dispose()
     {
         _model?.Dispose();
         _tokenizer?.Dispose();
+        _initLock?.Dispose();
     }
 }
