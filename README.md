@@ -65,4 +65,4 @@ It is designed to be **proactive**, **private**, and **powerful**—capable of b
 - **User Control**: You permit sensitive actions (like file deletion or network calls).
 
 ---
-*Built with ❤️ for the AI Engineer 2026 Hackathon*
+*Made with ❤️ in California*
